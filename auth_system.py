@@ -1,6 +1,7 @@
 import json
 import os
 import logging
+import bcrypt
 
 USERS_FILE = "users.json"
 
@@ -23,24 +24,27 @@ def save_users(users):
 def register_user():
     users = load_users()
     username = input("Username: ")
-    password = input("Password: ")
+    password = input("Password: ").encode()
 
     if username in users:
         print("User already exists")
         return
 
-    users[username] = password
-    save_users(users)
+    hashed_password = bcrypt.hashpw(password, bcrypt.gensalt())
+    users[username] = hashed_password.decode()
 
+    save_users(users)
     logging.info(f"User registered: {username}")
     print("User registered successfully")
 
 def login_user():
     users = load_users()
     username = input("Username: ")
-    password = input("Password: ")
+    password = input("Password: ").encode()
 
-    if users.get(username) == password:
+    stored_hash = users.get(username)
+
+    if stored_hash and bcrypt.checkpw(password, stored_hash.encode()):
         logging.info(f"Successful login: {username}")
         print("Login successful")
     else:
